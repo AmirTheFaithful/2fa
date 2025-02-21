@@ -1,5 +1,7 @@
 /client/node_modules/
 /client/package-lock.json
+/client/coverage/
+/client/styleMock.js
 /client/DS_Store
 /client/README.md
 /server/node_modules/
