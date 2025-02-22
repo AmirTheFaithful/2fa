@@ -12,6 +12,9 @@ export interface User extends Document {
     mfaSecret: string;
   };
   system: {
+    avatarURL: string;
     prefferedColors: [string, string] | null;
   };
 }
+
+export type Users = Array<User>;

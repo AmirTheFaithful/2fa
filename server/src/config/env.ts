@@ -7,3 +7,7 @@ export const sys = {
   serv_port: process.env.SERV_PORT!,
   client_port: process.env.CLIENT_PORT!,
 };
+
+export const db = {
+  mongo_uri: process.env.MONGO_URI!,
+};
