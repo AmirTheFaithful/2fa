@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import UserService from "../services/user.service";
 
 import { User } from "../types/user.type";
-import { RegisterRequestBody } from "../types/auth.type";
+import { RegisterRequestBody, LoginRequestBody } from "../types/auth.type";
 import {
   Controller,
   ControllerActionReturnType,
@@ -66,6 +66,25 @@ export default class AuthController extends Controller {
       await newUser.save();
 
       return res.status(201).json({ message: "Register success." });
+    } catch (error: any) {
+      return this.handleException(error, res);
+    }
+  }
+
+  public async login(
+    req: Request,
+    res: Response
+  ): ControllerActionReturnType<User> {
+    try {
+      const { email, password }: LoginRequestBody = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: "Invalid request body." });
+      }
+
+      return res
+        .status(200)
+        .json({ payload: req.user._id, message: "Login success." });
     } catch (error: any) {
       return this.handleException(error, res);
     }
