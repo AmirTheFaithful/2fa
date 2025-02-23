@@ -21,7 +21,7 @@ export default class UserService {
   }
 
   public async getUserByEmail(email: string): Promise<User | null> {
-    return await this.model.findOne({ email });
+    return await this.model.findOne({ "meta.email": email });
   }
 
   public async createNewUser(data: Record<string, any>): Promise<User> {

@@ -26,7 +26,7 @@ export default class UserController extends Controller {
         return res.status(400).json({ message: "Invalid request body." });
       }
 
-      const id: ObjectId = new ObjectId(req.query.id as string);
+      const id: ObjectId = new ObjectId(req.query.id.toString());
       const user: User | null = await this.service.getUserById(id);
 
       if (!user) {
@@ -49,7 +49,12 @@ export default class UserController extends Controller {
       }
 
       const email: string = req.query.email.toString();
+
       const user: User | null = await this.service.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found." }).end();
+      }
 
       return res.status(200).json({ payload: user, message: "Fetch success." });
     } catch (error: any) {
@@ -63,11 +68,11 @@ export default class UserController extends Controller {
     res: Response
   ): ControllerActionReturnType<Users> {
     try {
-      if (req.params.id) {
+      if (req.query.id) {
         return await this.getUserById(req, res);
       }
 
-      if (req.params.email) {
+      if (req.query.email) {
         return await this.getUserByEmail(req, res);
       }
 

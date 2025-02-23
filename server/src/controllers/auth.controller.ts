@@ -1,17 +1,16 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { body, validationResult } from "express-validator";
 
 import UserService from "../services/user.service";
 
-import { User, Users } from "../types/user.type";
+import { User } from "../types/user.type";
 import { RegisterRequestBody } from "../types/auth.type";
 import {
   Controller,
   ControllerActionReturnType,
 } from "../types/controller.type";
 
-export default class AuthClass extends Controller {
+export default class AuthController extends Controller {
   private service: UserService;
 
   constructor() {
@@ -50,11 +49,18 @@ export default class AuthClass extends Controller {
 
       // Fill the future account body with needed contents:
       const newUser: User = await this.service.createNewUser({
-        firstname,
-        lastname,
-        email,
-        hash,
-        isMfaActive: false,
+        meta: {
+          firstname,
+          lastname,
+          email,
+        },
+        auth: {
+          hash,
+          isMfaActive: false,
+        },
+        system: {
+          avatarURL,
+        },
       });
 
       await newUser.save();
