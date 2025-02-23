@@ -24,13 +24,13 @@ export default class UserService {
     return await this.model.findOne({ email });
   }
 
-  public async createNewUser(data: Record<string, User>): Promise<User> {
+  public async createNewUser(data: Record<string, any>): Promise<User> {
     return new this.model(data);
   }
 
   public async updateUserById(
     id: ObjectId,
-    data: Record<string, User>
+    data: Record<string, any>
   ): Promise<User | null> {
     return this.model.findByIdAndUpdate(id, data);
   }
