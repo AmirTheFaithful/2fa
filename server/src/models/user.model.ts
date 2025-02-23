@@ -6,11 +6,11 @@ const UserSchema: Schema<User> = new Schema<User>({
   meta: {
     firstname: {
       type: String,
-      required: false,
+      required: true,
     },
     lastname: {
       type: String,
-      required: false,
+      required: true,
     },
     email: {
       type: String,
