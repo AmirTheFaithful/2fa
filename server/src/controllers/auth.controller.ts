@@ -1,11 +1,19 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import { generateSecret, otpauthURL, GeneratedSecret } from "speakeasy";
+import {
+  generateSecret,
+  otpauthURL,
+  totp,
+  GeneratedSecret,
+  TotpVerifyOptions,
+} from "speakeasy";
+import jwt from "jsonwebtoken";
 import qrcode from "qrcode";
 
 // Utilities imports:
 import UserService from "../services/user.service";
 import otpauthURLOptions from "../config/otpauth";
+import { auth } from "../config/env";
 
 // Type defintions imports:
 import { User } from "../types/user.type";
@@ -189,6 +197,54 @@ export default class AuthController extends Controller {
         payload: qrCodeImageURL,
         message: "Second factor passed successfully.",
       });
+    } catch (error: any) {
+      return this.handleException(error, res);
+    }
+  }
+
+  public async verify2fa(
+    req: Request,
+    res: Response
+  ): ControllerActionReturnType<User> {
+    try {
+      // Retrieve web token from the request headers.
+      const token: string = req.headers["jwt"] as string;
+
+      if (!token) {
+        return res.status(400).json({ message: "'jwt' header is missing." });
+      }
+
+      const user: User | null = req.user;
+
+      if (!user) {
+        return res.status(403).json({ message: "Unauthorized." });
+      }
+
+      const verificationOptions: TotpVerifyOptions = {
+        secret: user.auth.mfaSecret,
+        encoding: "base32",
+        token,
+      };
+
+      const verified = totp.verify(verificationOptions);
+
+      if (!verified) {
+        return res
+          .status(400)
+          .json({ message: "Invalid second factor token." });
+      }
+
+      const newToken: string = jwt.sign({ _id: user._id }, auth.scrt_key, {
+        expiresIn: "1hr",
+      });
+
+      return res
+        .status(200)
+        .json({
+          payload: newToken,
+          message: "Second factor verifiaction success.",
+        })
+        .end();
     } catch (error: any) {
       return this.handleException(error, res);
     }

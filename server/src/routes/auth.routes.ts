@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import passport from "passport";
 import {
   body,
   validationResult,
@@ -40,11 +41,12 @@ export default (router: Router): void => {
 
   router.post(
     "/auth/login",
+    passport.authenticate("local"),
     [
       body("email").isEmail().withMessage("Invalid email address."),
-      body("password")
-        .isStrongPassword()
-        .withMessage("Provided passport is not strong enough."),
+      // body("password")
+      //   .isStrongPassword()
+      //   .withMessage("Provided passport is not strong enough."),
     ],
     async (
       req: Request<{}, {}, LoginRequestBody>,
@@ -53,8 +55,13 @@ export default (router: Router): void => {
       const errors = validationResult(req);
 
       if (!errors.isEmpty()) {
-        res.status(200).json({ message: "User logged in successfully." }).end();
+        console.log(errors);
+        res.status(403).json({ message: "Login failure." }).end();
+        return;
       }
+
+      await controller.login(req, res);
+      return;
     }
   );
 
@@ -78,6 +85,13 @@ export default (router: Router): void => {
     "/2fa/setup",
     async (req: Request, res: Response): Promise<void> => {
       await controller.setup2fa(req, res);
+    }
+  );
+
+  router.get(
+    "/2fa/verify",
+    async (req: Request, res: Response): Promise<void> => {
+      await controller.verify2fa(req, res);
     }
   );
 };

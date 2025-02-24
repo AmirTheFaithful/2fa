@@ -9,6 +9,7 @@ import passport from "passport";
 // Middlewares configurations imports.
 import corsOptions from "../config/cors";
 import sessionOptions from "../config/session";
+import "../config/passport";
 
 export default (app: Application): void => {
   app.use(bodyParser.json());
