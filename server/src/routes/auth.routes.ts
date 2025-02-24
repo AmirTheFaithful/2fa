@@ -55,4 +55,11 @@ export default (router: Router): void => {
       }
     }
   );
+
+  router.post(
+    "/auth/logout",
+    async (req: Request, res: Response): Promise<void> => {
+      await controller.logout(req, res);
+    }
+  );
 };

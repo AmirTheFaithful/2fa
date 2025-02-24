@@ -89,4 +89,37 @@ export default class AuthController extends Controller {
       return this.handleException(error, res);
     }
   }
+
+  public async logout(
+    req: Request,
+    res: Response
+  ): ControllerActionReturnType<User> {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Unauthorized." });
+      }
+
+      // Perform logging out process.
+      req.logOut(
+        async (
+          error: Error
+        ): Promise<void | Response<User, Record<string, any>>> => {
+          // Handle error if it was happened.
+          if (error) {
+            console.log(
+              `An ${error.name} occurred while logging out a user, with message: ${error.message}.`
+            );
+            return res.status(400).json({ message: "Logout failure." });
+          }
+
+          // If everything went ok - go back.
+          return;
+        }
+      );
+
+      return res.status(200).json({ message: "Logout success." });
+    } catch (error: any) {
+      return this.handleException(error, res);
+    }
+  }
 }
