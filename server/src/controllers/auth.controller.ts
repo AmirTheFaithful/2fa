@@ -1,8 +1,13 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
+import { generateSecret, otpauthURL, GeneratedSecret } from "speakeasy";
+import qrcode from "qrcode";
 
+// Utilities imports:
 import UserService from "../services/user.service";
+import otpauthURLOptions from "../config/otpauth";
 
+// Type defintions imports:
 import { User } from "../types/user.type";
 import { RegisterRequestBody, LoginRequestBody } from "../types/auth.type";
 import {
@@ -17,6 +22,8 @@ export default class AuthController extends Controller {
     super("Auth");
     this.service = new UserService();
   }
+
+  /* SECTION: 1ST AUTHENTICATION FACTOR ACTIONS. */
 
   public async register(
     req: Request,
@@ -95,7 +102,11 @@ export default class AuthController extends Controller {
     res: Response
   ): ControllerActionReturnType<User> {
     try {
-      if (!req.user) {
+      // NOTE: Retrieve user object from the request,
+      // as it would be present there if the user is
+      // authenticated (passed 1st auth factor).
+      const user: User | null = req.user;
+      if (!user) {
         return res.status(401).json({ message: "Unauthorized." });
       }
 
@@ -118,6 +129,47 @@ export default class AuthController extends Controller {
       );
 
       return res.status(200).json({ message: "Logout success." });
+    } catch (error: any) {
+      return this.handleException(error, res);
+    }
+  }
+
+  /* SECTION: 2ND AUTHENTICATION FACTOR ACTIONS. */
+
+  public async setup2fa(
+    req: Request,
+    res: Response
+  ): ControllerActionReturnType<User> {
+    try {
+      // READ: line 105.
+      const user: User | null = req.user;
+
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized." });
+      }
+
+      // Generate 2fa secret, which is the key of second authentication factor.
+      const secret: GeneratedSecret = generateSecret();
+
+      // Set user's second factor auth values to enabled state.
+      user.auth.mfaSecret = secret.base32;
+      user.auth.isMfaActive = true;
+
+      // Save user's auth section changes to DB.
+      await user.save();
+
+      // Generate otpauth URL to convert it to QR code image URL later.
+      const url: string = otpauthURL(
+        otpauthURLOptions(user._id as string, secret)
+      );
+
+      // Convert otpauth URL to the QR code image URL.
+      const qrCodeImageURL: string = await qrcode.toDataURL(url);
+
+      return res.status(200).json({
+        payload: qrCodeImageURL,
+        message: "Second factor passed successfully.",
+      });
     } catch (error: any) {
       return this.handleException(error, res);
     }

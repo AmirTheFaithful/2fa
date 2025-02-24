@@ -13,6 +13,8 @@ import { RegisterRequestBody, LoginRequestBody } from "../types/auth.type";
 const controller: AuthController = new AuthController();
 
 export default (router: Router): void => {
+  /* SECTION: 1ST AUTHENTICATION FACTOR ROUTES. */
+
   router.post(
     "/auth/register",
     [
@@ -60,6 +62,15 @@ export default (router: Router): void => {
     "/auth/logout",
     async (req: Request, res: Response): Promise<void> => {
       await controller.logout(req, res);
+    }
+  );
+
+  /* SECTION: 2ST AUTHENTICATION FACTOR ROUTES. */
+
+  router.post(
+    "/2fa/setup",
+    async (req: Request, res: Response): Promise<void> => {
+      await controller.setup2fa(req, res);
     }
   );
 };
