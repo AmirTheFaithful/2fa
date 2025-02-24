@@ -58,6 +58,13 @@ export default (router: Router): void => {
     }
   );
 
+  router.get(
+    "/auth/status",
+    async (req: Request, res: Response): Promise<void> => {
+      await controller.authStatus(req, res);
+    }
+  );
+
   router.post(
     "/auth/logout",
     async (req: Request, res: Response): Promise<void> => {

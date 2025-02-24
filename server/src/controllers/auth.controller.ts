@@ -97,6 +97,25 @@ export default class AuthController extends Controller {
     }
   }
 
+  public async authStatus(
+    req: Request,
+    res: Response
+  ): ControllerActionReturnType<User> {
+    try {
+      const user: User | null = req.user;
+
+      if (!user) {
+        return res.status(401).json({ message: "Status: Unauthorized." });
+      }
+
+      return res
+        .status(200)
+        .json({ payload: req.user._id, message: "Status: Logged in." });
+    } catch (error: any) {
+      return await this.handleException(error, res);
+    }
+  }
+
   public async logout(
     req: Request,
     res: Response
