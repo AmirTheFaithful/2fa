@@ -9,6 +9,8 @@ import {
 
 import AuthController from "../controllers/auth.controller";
 
+import isAuthenticated from "../middlewares/isAuthenticated";
+
 import { RegisterRequestBody, LoginRequestBody } from "../types/auth.type";
 
 const controller: AuthController = new AuthController();
@@ -83,6 +85,7 @@ export default (router: Router): void => {
 
   router.post(
     "/2fa/setup",
+    isAuthenticated,
     async (req: Request, res: Response): Promise<void> => {
       await controller.setup2fa(req, res);
     }
@@ -90,6 +93,7 @@ export default (router: Router): void => {
 
   router.get(
     "/2fa/verify",
+    isAuthenticated,
     async (req: Request, res: Response): Promise<void> => {
       await controller.verify2fa(req, res);
     }
@@ -97,6 +101,7 @@ export default (router: Router): void => {
 
   router.post(
     "/2fa/reset",
+    isAuthenticated,
     async (req: Request, res: Response): Promise<void> => {
       await controller.reset2fa(req, res);
     }
