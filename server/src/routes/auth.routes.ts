@@ -94,4 +94,11 @@ export default (router: Router): void => {
       await controller.verify2fa(req, res);
     }
   );
+
+  router.post(
+    "/2fa/reset",
+    async (req: Request, res: Response): Promise<void> => {
+      await controller.reset2fa(req, res);
+    }
+  );
 };

@@ -1,12 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import {
-  generateSecret,
-  otpauthURL,
-  totp,
-  GeneratedSecret,
-  TotpVerifyOptions,
-} from "speakeasy";
+import speakeasy from "speakeasy";
 import jwt from "jsonwebtoken";
 import qrcode from "qrcode";
 
@@ -118,9 +112,12 @@ export default class AuthController extends Controller {
 
       return res
         .status(200)
-        .json({ payload: req.user._id, message: "Status: Logged in." });
+        .json({
+          payload: { isMfaActive: user.auth.isMfaActive, userId: user._id },
+          message: "Status: Logged in.",
+        });
     } catch (error: any) {
-      return await this.handleException(error, res);
+      return this.handleException(error, res);
     }
   }
 
@@ -176,7 +173,7 @@ export default class AuthController extends Controller {
       }
 
       // Generate 2fa secret, which is the key of second authentication factor.
-      const secret: GeneratedSecret = generateSecret();
+      const secret: speakeasy.GeneratedSecret = speakeasy.generateSecret();
 
       // Set user's second factor auth values to enabled state.
       user.auth.mfaSecret = secret.base32;
@@ -186,15 +183,15 @@ export default class AuthController extends Controller {
       await user.save();
 
       // Generate otpauth URL to convert it to QR code image URL later.
-      const url: string = otpauthURL(
-        otpauthURLOptions(user._id as string, secret)
+      const url: string = speakeasy.otpauthURL(
+        otpauthURLOptions(user._id!.toString(), secret)
       );
 
       // Convert otpauth URL to the QR code image URL.
       const qrCodeImageURL: string = await qrcode.toDataURL(url);
 
       return res.status(200).json({
-        payload: qrCodeImageURL,
+        payload: { secret, qrURL: qrCodeImageURL },
         message: "Second factor passed successfully.",
       });
     } catch (error: any) {
@@ -208,10 +205,10 @@ export default class AuthController extends Controller {
   ): ControllerActionReturnType<User> {
     try {
       // Retrieve web token from the request headers.
-      const token: string = req.headers["jwt"] as string;
+      const token: string = req.headers["token"] as string;
 
       if (!token) {
-        return res.status(400).json({ message: "'jwt' header is missing." });
+        return res.status(400).json({ message: "'token' header is missing." });
       }
 
       const user: User | null = req.user;
@@ -220,13 +217,13 @@ export default class AuthController extends Controller {
         return res.status(403).json({ message: "Unauthorized." });
       }
 
-      const verificationOptions: TotpVerifyOptions = {
+      const verificationOptions: speakeasy.TotpVerifyOptions = {
         secret: user.auth.mfaSecret,
         encoding: "base32",
         token,
       };
 
-      const verified = totp.verify(verificationOptions);
+      const verified = speakeasy.totp.verify(verificationOptions);
 
       if (!verified) {
         return res
@@ -241,10 +238,31 @@ export default class AuthController extends Controller {
       return res
         .status(200)
         .json({
-          payload: newToken,
+          payload: { isMfaActive: user.auth.isMfaActive, token: newToken },
           message: "Second factor verifiaction success.",
         })
         .end();
+    } catch (error: any) {
+      return this.handleException(error, res);
+    }
+  }
+
+  public async reset2fa(
+    req: Request,
+    res: Response
+  ): ControllerActionReturnType<User> {
+    try {
+      const user: User | null = req.user;
+
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized." });
+      }
+
+      user.auth.mfaSecret = "";
+      user.auth.isMfaActive = false;
+      await user.save();
+
+      return res.status(200).json({ message: "Second factor reset success." });
     } catch (error: any) {
       return this.handleException(error, res);
     }
